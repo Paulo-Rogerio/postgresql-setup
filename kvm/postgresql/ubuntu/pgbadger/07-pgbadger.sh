@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 
-# export TZ=America/Sao_Paulo
-# export DEBIAN_FRONTEND='noninteractive'
-
 apt -y install pgbadger tree
 
 mkdir -p /opt/pgbadger/output

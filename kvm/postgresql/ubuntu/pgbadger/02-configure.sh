@@ -7,30 +7,30 @@ echo "================================================"
 rm -rf /data/*
 rm -rf /wal/*
 
-mkdir -p /data/17/pgdata
-mkdir -p /wal/17
+mkdir -p /data/${PGVERSION}/pgdata
+mkdir -p /wal/${PGVERSION}
 
 chown postgres: /data/ -R
 chown postgres: /wal/ -R
 
-pg_dropcluster --stop 17 main
+pg_dropcluster --stop ${PGVERSION} main
 
 systemctl stop postgresql
 
-rm -rf /var/lib/postgresql/17
+rm -rf /var/lib/postgresql/${PGVERSION}
 
-pg_createcluster 17 main \
-    --datadir=/data/17/pgdata \
+pg_createcluster ${PGVERSION} main \
+    --datadir=/data/${PGVERSION}/pgdata \
     --locale=en_US.UTF-8 \
     --encoding=UTF-8
 
-sudo -iu postgres mv /data/17/pgdata/pg_wal /wal/17/
-sudo -iu postgres ln -svf /wal/17/pg_wal /data/17/pgdata/pg_wal
+sudo -iu postgres mv /data/${PGVERSION}/pgdata/pg_wal /wal/${PGVERSION}/
+sudo -iu postgres ln -svf /wal/${PGVERSION}/pg_wal /data/${PGVERSION}/pgdata/pg_wal
 
-sudo -iu postgres cp /etc/postgresql/17/main/postgresql.conf{,.ori}
-sudo -iu postgres cp /etc/postgresql/17/main/pg_hba.conf{,.ori}
+sudo -iu postgres cp /etc/postgresql/${PGVERSION}/main/postgresql.conf{,.ori}
+sudo -iu postgres cp /etc/postgresql/${PGVERSION}/main/pg_hba.conf{,.ori}
 
-cat > /etc/postgresql/17/main/pg_hba.conf <<EOF
+cat > /etc/postgresql/${PGVERSION}/main/pg_hba.conf <<EOF
 local   all             postgres                                trust
 local   all             all                                     trust
 host    all             all             0.0.0.0/0            scram-sha-256
@@ -41,14 +41,14 @@ host    replication     all             ::1/128                 scram-sha-256
 EOF
 
 
-cat > /etc/postgresql/17/main/postgresql.conf <<EOF
+cat > /etc/postgresql/${PGVERSION}/main/postgresql.conf <<EOF
 archive_command = 'exit 0'
 archive_mode = 'on'
 listen_addresses = '*'
-data_directory = '/data/17/pgdata'
-hba_file = '/etc/postgresql/17/main/pg_hba.conf'
-ident_file = '/etc/postgresql/17/main/pg_ident.conf'
-external_pid_file = '/var/run/postgresql/17-main.pid'
+data_directory = '/data/${PGVERSION}/pgdata'
+hba_file = '/etc/postgresql/${PGVERSION}/main/pg_hba.conf'
+ident_file = '/etc/postgresql/${PGVERSION}/main/pg_ident.conf'
+external_pid_file = '/var/run/postgresql/${PGVERSION}-main.pid'
 port = 5432
 max_connections = 100
 unix_socket_directories = '/var/run/postgresql'
@@ -60,7 +60,7 @@ dynamic_shared_memory_type = posix
 max_wal_size = 1GB
 min_wal_size = 80MB
 log_timezone = 'Etc/UTC'
-cluster_name = '17/main'
+cluster_name = '${PGVERSION}/main'
 datestyle = 'iso, mdy'
 timezone = 'Etc/UTC'
 lc_messages = 'en_US.UTF-8'

@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-# export TZ=America/Sao_Paulo
-# export DEBIAN_FRONTEND='noninteractive'
 
 apt -y install nginx
 

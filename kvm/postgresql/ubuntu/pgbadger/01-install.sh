@@ -17,5 +17,5 @@ curl -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc --fail https://
 sh -c "echo 'deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $VERSION_CODENAME-pgdg main' > /etc/apt/sources.list.d/pgdg.list"
 
 apt update
-apt -y install postgresql-17 postgresql-client-17 postgresql-17 libpq-dev
+apt -y install postgresql-${PGVERSION} postgresql-client-${PGVERSION} postgresql-${PGVERSION} libpq-dev
 

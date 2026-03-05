@@ -9,7 +9,7 @@ function install()
   sudo virt-install \
     --name ${name} \
     --disk path="/var/lib/libvirt/images/${name}.qcow2",device=disk,bus=scsi \
-    --os-variant "ubuntu-stable-latest" \
+    --os-variant "${os_variant}" \
     --network network=cka-net,model=virtio \
     --virt-type kvm \
     --vcpus "${vcpu}" \
@@ -30,7 +30,7 @@ network:
   version: 2
   renderer: networkd
   ethernets:
-    enp1s0:
+    ${interface}:
       dhcp4: false
       addresses:
         - ${ip}/24
@@ -53,6 +53,9 @@ chpasswd:
   list: |
     root:123456
 
+preserve_hostname: false
+
+fqdn: ${name}
 hostname: ${name}
 
 users:
@@ -102,6 +105,15 @@ do
     export vcpu=$(awk '{print $3}' <<< ${temp})
     export ip=$(awk '{print $4}' <<< ${temp})
     export image=$(awk '{print $5}' <<< ${temp})
+
+    if [[ ${image} =~ ^rocky ]]
+    then
+     export os_variant="rocky9" 
+     export interface="eth0"
+    else
+     export os_variant="ubuntu-stable-latest"
+     export interface="enp1s0"     
+    fi
 
     echo "Install Vm: ${name}"
     echo

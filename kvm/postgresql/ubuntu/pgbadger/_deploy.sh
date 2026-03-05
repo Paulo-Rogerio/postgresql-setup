@@ -2,6 +2,7 @@
 
 export TZ=America/Sao_Paulo
 export DEBIAN_FRONTEND='noninteractive'
+export PGVERSION=17
 
 function check(){
     todo=true
