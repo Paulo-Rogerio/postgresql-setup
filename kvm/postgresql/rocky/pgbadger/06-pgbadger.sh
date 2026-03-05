@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-dnf install epel-release -y
+dnf -y install epel-release 
 
 dnf config-manager --set-enabled crb
 
