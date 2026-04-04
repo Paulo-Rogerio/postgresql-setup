@@ -4,11 +4,14 @@ function install()
 {
   network
   userdata
-
   sudo qemu-img create -b /var/lib/libvirt/images/${image} -f qcow2 -F qcow2 /var/lib/libvirt/images/${name}.qcow2 50G
+  sudo qemu-img create -o preallocation=metadata -f qcow2 /var/lib/libvirt/images/${name}-disk2.qcow2 2G
+  sudo qemu-img create -o preallocation=metadata -f qcow2 /var/lib/libvirt/images/${name}-disk3.qcow2 2G
   sudo virt-install \
     --name ${name} \
     --disk path="/var/lib/libvirt/images/${name}.qcow2",device=disk,bus=scsi \
+    --disk path="/var/lib/libvirt/images/${name}-disk2.qcow2",device=disk,bus=scsi \
+    --disk path="/var/lib/libvirt/images/${name}-disk3.qcow2",device=disk,bus=scsi \
     --os-variant "${os_variant}" \
     --network network=cka-net,model=virtio \
     --virt-type kvm \

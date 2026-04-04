@@ -7,7 +7,7 @@ do
   if [[ ! ${temp} =~ ^# ]]
   then
     node=$(awk '{print $1}' <<< ${temp})
-    sudo virsh stop ${node}
+    sudo virsh shutdown ${node}
     echo "Stopped ${node}"
     echo "--------------"
   fi

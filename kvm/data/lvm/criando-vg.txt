@@ -1,0 +1,200 @@
+1) Primeiro Cenario 
+- Install package
+- Criando Vg com um unico disco ( sdb ) ( VGData )
+- Criar Lv vinculado ao VGDados ( LVData )
+- Adicionar um novo disco ao VG existente ( sdc )
+
+2) Segundo Cenario 
+- Expadndir o disco no Hyper Vision
+- Expandir o VG 
+
+#==============================================================================================
+# Formatar Disco
+#==============================================================================================
+
+[root@pops-lvm ~]# dnf install lvm2 -y
+
+[root@pops-lvm ~]# lsblk 
+NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
+sda      8:0    0   50G  0 disk 
+├─sda1   8:1    0    2M  0 part 
+├─sda2   8:2    0  100M  0 part /efi
+│                               /boot/efi
+├─sda3   8:3    0 1000M  0 part /boot
+└─sda4   8:4    0 48.9G  0 part /
+sdb      8:16   0    2G  0 disk 
+sdc      8:32   0    2G  0 disk 
+sr0     11:0    1  370K  0 rom 
+
+[root@pops-lvm ~]# lsscsi
+[0:0:0:0]    disk    QEMU     QEMU HARDDISK    2.5+  /dev/sda 
+[0:0:0:1]    disk    QEMU     QEMU HARDDISK    2.5+  /dev/sdc 
+[0:0:0:2]    disk    QEMU     QEMU HARDDISK    2.5+  /dev/sdb 
+[4:0:0:0]    cd/dvd  QEMU     QEMU DVD-ROM     2.5+  /dev/sr0
+
+# Formatar com LVM ( 8e )
+cfdisk /dev/sdb
+pvcreate /dev/sdb1
+vgcreate VGData /dev/sdb1
+lvcreate --name LVData -l 100%FREE VGData
+
+# Sistemas de Arquivos ( xfs )
+mkfs.xfs /dev/VGData/LVData
+
+# Sistemas de Arquivos ( ext4 )
+mkfs.ext4 /dev/VGData/LVData
+
+# Ponto de Montagem ( xfs )
+mkdir -p /data
+cat >> /etc/fstab <<EOF
+/dev/VGData/LVData /data xfs defaults 0 1
+EOF
+systemctl daemon-reload
+mount -a
+
+# Ponto de Montagem ( ext4 )
+mkdir -p /data
+cat >> /etc/fstab <<EOF
+/dev/VGData/LVData /data ext4 defaults 0 1
+EOF
+systemctl daemon-reload
+mount -a
+
+[root@pops-lvm ~]# df -h
+Filesystem                 Size  Used Avail Use% Mounted on
+devtmpfs                   4.0M     0  4.0M   0% /dev
+tmpfs                      886M     0  886M   0% /dev/shm
+tmpfs                      355M  740K  354M   1% /run
+/dev/sda4                   49G  1.6G   48G   4% /
+/dev/sda3                  936M  468M  469M  50% /boot
+/dev/sda2                  100M   11M   90M  11% /boot/efi
+tmpfs                      178M     0  178M   0% /run/user/0
+/dev/mapper/VGData-LVData  2.0G   24K  1.9G   1% /data
+
+#==============================================================================================
+# Expandindo Disco ( VG ) / Adicionar um novo disco ao VG Existente
+#==============================================================================================
+
+[root@pops-lvm ~]# lsblk 
+NAME              MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
+sda                 8:0    0   50G  0 disk 
+├─sda1              8:1    0    2M  0 part 
+├─sda2              8:2    0  100M  0 part /boot/efi
+├─sda3              8:3    0 1000M  0 part /boot
+└─sda4              8:4    0 48.9G  0 part /
+sdb                 8:16   0    2G  0 disk 
+└─sdb1              8:17   0    2G  0 part 
+  └─VGData-LVData 253:0    0    2G  0 lvm  /data
+sdc                 8:32   0    2G  0 disk 
+sr0                11:0    1  370K  0 rom
+
+cfdisk /dev/sdc
+pvcreate /dev/sdc1
+vgextend VGData /dev/sdc1
+lvextend -l +100%FREE /dev/VGData/LVData
+resize2fs /dev/VGData/LVData
+
+[root@pops-lvm ~]# lsblk 
+NAME              MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
+sda                 8:0    0   50G  0 disk 
+├─sda1              8:1    0    2M  0 part 
+├─sda2              8:2    0  100M  0 part /boot/efi
+├─sda3              8:3    0 1000M  0 part /boot
+└─sda4              8:4    0 48.9G  0 part /
+sdb                 8:16   0    2G  0 disk 
+└─sdb1              8:17   0    2G  0 part 
+  └─VGData-LVData 253:0    0    4G  0 lvm  /data
+sdc                 8:32   0    2G  0 disk 
+└─sdc1              8:33   0    2G  0 part 
+  └─VGData-LVData 253:0    0    4G  0 lvm  /data
+
+
+[root@pops-lvm ~]# vgs
+  VG     #PV #LV #SN Attr   VSize VFree
+  VGData   2   1   0 wz--n- 3.99g    0 
+
+
+[root@pops-lvm ~]# pvs
+  PV         VG     Fmt  Attr PSize  PFree
+  /dev/sdb1  VGData lvm2 a--  <2.00g    0 
+  /dev/sdc1  VGData lvm2 a--  <2.00g    0 
+
+[root@pops-lvm ~]# lvs
+  LV     VG     Attr       LSize Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert
+  LVData VGData -wi-ao---- 3.99g  
+
+#==============================================================================================
+# Desligue a VM e incremente ajuste cada disco para 5G
+#==============================================================================================
+
+# Cada disco tem 5 GB mas o LVM ainda nao conheceu
+
+[root@pops-lvm ~]# lsblk 
+NAME              MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
+sda                 8:0    0   50G  0 disk 
+├─sda1              8:1    0    2M  0 part 
+├─sda2              8:2    0  100M  0 part /efi
+│                                          /boot/efi
+├─sda3              8:3    0 1000M  0 part /boot
+└─sda4              8:4    0 48.9G  0 part /
+sdb                 8:16   0    5G  0 disk 
+└─sdb1              8:17   0    2G  0 part 
+  └─VGData-LVData 253:0    0    4G  0 lvm  /data
+sdc                 8:32   0    5G  0 disk 
+└─sdc1              8:33   0    2G  0 part 
+  └─VGData-LVData 253:0    0    4G  0 lvm  /data
+
+# S.O
+[root@pops-lvm ~]# df -h
+Filesystem                 Size  Used Avail Use% Mounted on
+devtmpfs                   4.0M     0  4.0M   0% /dev
+tmpfs                      854M     0  854M   0% /dev/shm
+tmpfs                      342M  716K  341M   1% /run
+/dev/sda4                   49G  1.6G   48G   4% /
+/dev/sda3                  936M  505M  432M  54% /boot
+/dev/sda2                  100M   11M   90M  11% /efi
+/dev/mapper/VGData-LVData  3.9G   24K  3.7G   1% /data
+tmpfs                      171M     0  171M   0% /run/user/0
+
+[root@pops-lvm ~]# lsscsi 
+[0:0:0:0]    disk    QEMU     QEMU HARDDISK    2.5+  /dev/sda 
+[0:0:0:1]    disk    QEMU     QEMU HARDDISK    2.5+  /dev/sdc 
+[0:0:0:2]    disk    QEMU     QEMU HARDDISK    2.5+  /dev/sdb 
+[4:0:0:0]    cd/dvd  QEMU     QEMU DVD-ROM     2.5+  /dev/sr0 
+
+# Reconhecer o novo Bloco
+echo "- - -" | tee /sys/class/scsi_disk/0\:0\:0\:1/device/rescan
+echo "- - -" | tee /sys/class/scsi_disk/0\:0\:0\:2/device/rescan
+
+growpart /dev/sdb 1
+growpart /dev/sdc 1
+pvresize /dev/sdb1
+pvresize /dev/sdc1
+lvextend -l +100%FREE /dev/VGData/LVData
+resize2fs /dev/VGData/LVData
+
+[root@pops-lvm ~]# lsblk 
+NAME              MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
+sda                 8:0    0   50G  0 disk 
+├─sda1              8:1    0    2M  0 part 
+├─sda2              8:2    0  100M  0 part /boot/efi
+├─sda3              8:3    0 1000M  0 part /boot
+└─sda4              8:4    0 48.9G  0 part /
+sdb                 8:16   0    5G  0 disk 
+└─sdb1              8:17   0    5G  0 part 
+  └─VGData-LVData 253:0    0   10G  0 lvm  /data
+sdc                 8:32   0    5G  0 disk 
+└─sdc1              8:33   0    5G  0 part 
+  └─VGData-LVData 253:0    0   10G  0 lvm  /data
+sr0                11:0    1 1024M  0 rom 
+
+[root@pops-lvm ~]# df -h
+Filesystem                 Size  Used Avail Use% Mounted on
+devtmpfs                   4.0M     0  4.0M   0% /dev
+tmpfs                      854M     0  854M   0% /dev/shm
+tmpfs                      342M  712K  341M   1% /run
+/dev/sda4                   49G  1.6G   48G   4% /
+/dev/sda3                  936M  505M  432M  54% /boot
+/dev/sda2                  100M   11M   90M  11% /boot/efi
+/dev/mapper/VGData-LVData  9.8G   24K  9.4G   1% /data
+tmpfs                      171M     0  171M   0% /run/user/0
