@@ -90,8 +90,8 @@ write_files:
     encoding: base64
     content: SG9zdCAqCiAgU3RyaWN0SG9zdEtleUNoZWNraW5nIG5vCg==
 
-package_update: true
-package_upgrade: true
+package_update: false
+package_upgrade: false
 
 EOF
 }
