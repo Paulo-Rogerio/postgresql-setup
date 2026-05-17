@@ -16,3 +16,7 @@ qemu-img convert -f qcow2 -O qcow2 Rocky-9-GenericCloud-Base.latest.x86_64.qcow2
 ```bash
 virt-install --os-variant list
 ```
+
+### Replicação Lógica
+
+[PostgreSQL Replicação Lógica](docker/README.md)

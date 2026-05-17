@@ -1,0 +1,56 @@
+x-postgresql-common:
+  &postgresql-common
+  user: postgres
+  restart: always
+  environment:
+    POSTGRES_USER: postgres
+    POSTGRES_DB: postgres
+    POSTGRES_PASSWORD: postgres
+    POSTGRES_HOST_AUTH_METHOD: "scram-sha-256\nhost all all 0.0.0.0/0 scram-sha-256\nhost replication replication 0.0.0.0/0 scram-sha-256"
+    POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+  command: |
+    postgres 
+    -c wal_level=logical
+    -c hot_standby=on 
+    -c max_wal_senders=10 
+    -c max_replication_slots=10 
+    -c hot_standby_feedback=on
+  networks:
+    - postgresql
+  healthcheck:
+    test: 'pg_isready -U user --dbname=postgres'
+    interval: 10s
+    timeout: 5s
+    retries: 5
+
+services:
+
+  primary:
+    <<: *postgresql-common
+    image: postgres:13-alpine
+    container_name: primary
+    hostname: primary
+    ports:
+      - 5433:5432
+    networks:
+      postgresql:
+        ipv4_address: 172.22.0.10
+
+  replica:
+    <<: *postgresql-common
+    image: postgres:18-alpine
+    container_name: replica
+    hostname: replica
+    ports:
+      - 5434:5432
+    networks:
+      postgresql:
+        ipv4_address: 172.22.0.20
+
+networks:
+  postgresql:
+    driver: bridge
+    ipam:
+     config:
+       - subnet: 172.22.0.0/24
+         gateway: 172.22.0.1
