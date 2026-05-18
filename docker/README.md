@@ -4,9 +4,13 @@ O propósito deste laboratório, e entender como usar **Replicação Lógica** p
 
 
 [1) Setup Docker Compose](#1-setup-docker-compose)
+
 [2) Setup Replicação Lógica](#2-setup-replicação-lógica)
+
 [3) Setup Informações do Cluster](#3-setup-informações-do-cluster)
+
 [4) Replicação Lógica Vs BigTables](#4-replicação-lógica-vs-bigtables)
+
 [5) Roles e Permissões](#5-roles-e-permissões)
 
 ### 1) Setup Docker Compose
