@@ -1,4 +1,15 @@
-### Start Docker Compose
+# Postgresql Setup Replicação Lógica
+
+O propósito deste laboratório, e entender como usar **Replicação Lógica** para minimizar **downtime** no Upgrade de versões em um cluster PostgreSQL.
+
+
+[1) Setup Docker Compose](#1-setup-docker-compose)
+[2) Setup Replicação Lógica](#2-setup-replicação-lógica)
+[3) Setup Informações do Cluster](#3-setup-informações-do-cluster)
+[4) Replicação Lógica Vs BigTables](#4-replicação-lógica-vs-bigtables)
+[5) Roles e Permissões](#5-roles-e-permissões)
+
+### 1) Setup Docker Compose
 
 Executar o ***docker-compose*** para iniciar os containers.
 
@@ -6,9 +17,9 @@ Executar o ***docker-compose*** para iniciar os containers.
 sh docker-compose/restart.sh
 ```
 
-### Gerar Dados / Migrar Cluster
+### 2) Setup Replicação Lógica
 
-Para fins didáticos foi criado esse setup:
+Para fins didáticos foi criado esse setup.
 
 - Criar / Definir estrutra do Banco
 - Criar Roles e Permissões
@@ -22,7 +33,7 @@ sh generate-data/02-create-cluster.sh
 sh generate-data/03-manager-cluster.sh
 ```
 
-### Informações Cluster
+### 3) Setup Informações do Cluster 
 
 Como ambiente e dockerizado foi definido que:
 
@@ -31,7 +42,53 @@ Como ambiente e dockerizado foi definido que:
 5434 => replica
 ```
 
-### Roles e Permissões - Ambiente Produtivo.
+### 4) Replicação Lógica Vs BigTables
+
+Quando se tem um cluster muito grande, na casa dos **TB**, a replicação Lógica, pode trazer alguns problemas. Um dos principais é que enquanto a replicação acontece, pode-se acumular uma quantidade grande **WALS**, ter um **Lag de Replicação enorme** e um processo sync mais lento.
+
+Pensando nesse problema, foi desenhado um **setup simples**, onde carrega-se a carga de dados mais pesada **( no cenário 3 TB de uma determinada tabela)** antes mesmo de iniciar a replicação lógica. 
+
+Esse tipo de abordagem, permite que a replicação trabalhe de forma incremental. 
+
+
+De forma prática
+Temos uma Tabela: `3 TB`
+Taxa de mudança: `20 GB/dia`
+Dump/import demora: `10 horas`
+
+Nesse caso:
+A replicação lógica precisará aplicar apenas: `~ 8 GB de delta` e não 3 TB.
+
+Para esse cenário, deve-se respeitar uma sequencia lógica dos eventos, por isso eles foram 
+encadeados de forma sequêncial, para melhor entendimento.
+
+```bash
+cd generate-data/bigtables
+```
+
+No setup, existe um script `03-snapshot.sh` isso nos garante um dump consistente com WAL lógico. Nessa etapa a subscription deve exatamente após esse ponto. 
+
+Enquanto se faz dump/import:
+
+- INSERTs acontecem;
+- UPDATEs acontecem;
+- DELETEs acontecem.
+
+Como garantir que o dump e os WALs representam o MESMO ponto no tempo?
+
+`pg_export_snapshot()` => uma fotografia consistente do banco, principalmente se estiver usando  `pg_dump -Fd -j 16` cada worker do pg_dump pode enxergar momentos diferentes.
+
+SNAPSHOT CONSISTENTE
+        +
+WAL lógico a partir daquele ponto.
+
+Essa consitencia e ordenamento é levado em consideração pelo subscriber que aplica WALs:
+`A -> B -> C -> D`
+
+No laboratório, ao executar `03-snapshot.sh` seu terminal ficará preso, abra outra aba e continue o próximo script que o `04-dump-restore.sh`, quando finalizado, o terminal preso pode ser encerrado **( Ctrl + c)**.
+
+
+### 5) Roles e Permissões
 
 Essa instrução ***SQL***, te permite criar dinamicamente a estrutura do seu banco **PostgreSQL**. Ela pode ser muito útil, principalmente se vinculado a sua ferrameta de automação, principalmente pelo fato do script abaixo gerar dinamicamente **senhas**, entao plugar um cofre de senha como **Vault** seria totalmente possível.
 
