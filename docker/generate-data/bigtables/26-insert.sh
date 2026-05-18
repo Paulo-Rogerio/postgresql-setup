@@ -2,7 +2,11 @@
 
 export PGPASSWORD="postgres"
 
+echo "Person"
 psql -U "app" -h localhost -d "app" -p 5434 -c "select count(*) from sistemas.person;"
+
+echo "People"
+psql -U "app" -h localhost -d "app" -p 5434 -c "select count(*) from sistemas.people;"
 
 read -p "Start Range: " range_start
 read -p "Start End  : " range_end
@@ -14,7 +18,7 @@ psql \
   -v range_start=${range_start} -v range_end=${range_end} \
   -p 5434 <<EOF
 SET search_path='sistemas';
-INSERT INTO person (
+INSERT INTO sistemas.person (
  first_name,
  last_name,
  nationality,
@@ -29,7 +33,7 @@ SELECT
 , ceil(random()*2100000000) AS photo_id
 FROM generate_series(:range_start,:range_end) num;
 
-INSERT INTO people (
+INSERT INTO sistemas.people (
  first_name,
  last_name,
  nationality,

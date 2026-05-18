@@ -39,6 +39,15 @@ CREATE TABLE person (
     photo_id INTEGER UNIQUE
 );
 
+CREATE TABLE people (
+    id SERIAL PRIMARY KEY,
+    first_name TEXT NOT NULL,
+    last_name TEXT NOT NULL,
+    nationality TEXT,
+    birthday DATE,
+    photo_id INTEGER UNIQUE
+);
+
 CREATE OR REPLACE FUNCTION base26_encode(IN digits bigint, IN min_width int = 0)
   RETURNS varchar AS \$\$
         DECLARE

@@ -11,5 +11,4 @@ psql \
   -p 5434 <<EOF
 \x on;  
 SELECT * FROM pg_subscription;
-SELECT * FROM pg_replication_slots;
 EOF

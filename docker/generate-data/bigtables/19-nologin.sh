@@ -3,13 +3,13 @@
 export PGPASSWORD="postgres"
 
 echo "========================================="
-echo "List Publication"
 psql \
   -U "postgres" \
   -h localhost \
-  -d "app" \
-  -p 5434 <<EOF
-\x on;  
-SELECT * FROM pg_subscription;
-SELECT * FROM pg_replication_slots;
+  -d "postgres" \
+  -p 5433 <<EOF
+ALTER ROLE "app" NOLOGIN;
 EOF
+
+
+

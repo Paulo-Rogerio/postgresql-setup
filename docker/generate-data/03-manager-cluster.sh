@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+cd $(dirname $0)
+
 source manager-cluster/14-update-pg13.sh
 source manager-cluster/17-status-subscriber.sh
 source manager-cluster/21-check-lag.sh

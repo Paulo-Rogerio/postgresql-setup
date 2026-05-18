@@ -2,7 +2,7 @@
 
 export PGPASSWORD="postgres"
 
-psql -U "app" -h localhost -d "app" -p 5434 -c "select count(*) from sistemas.person;"
+psql -U "app" -h localhost -d "app" -p 5433 -c "select count(*) from sistemas.people;"
 
 read -p "Start Range: " range_start
 read -p "Start End  : " range_end
@@ -12,24 +12,10 @@ psql \
   -d "app" \
   -h localhost \
   -v range_start=${range_start} -v range_end=${range_end} \
-  -p 5434 <<EOF
+  -p 5433 <<EOF
 SET search_path='sistemas';
-INSERT INTO person (
- first_name,
- last_name,
- nationality,
- birthday,
- photo_id
-)
-SELECT
-  initcap(base26_encode(substring(random()::text,3,10)::bigint)) AS first_name
-, initcap(base26_encode(substring(random()::text,3,15)::bigint)) AS last_name
-, initcap(base26_encode(substring(random()::text,3,9)::bigint)) AS nationality
-, 'now'::date - (interval '90 years' * random()) AS birthday
-, ceil(random()*2100000000) AS photo_id
-FROM generate_series(:range_start,:range_end) num;
 
-INSERT INTO people (
+INSERT INTO sistemas.people (
  first_name,
  last_name,
  nationality,

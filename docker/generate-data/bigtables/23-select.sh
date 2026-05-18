@@ -7,13 +7,6 @@ psql \
   -h localhost \
   -d "app" \
   -p 5434 <<EOF
-  SELECT * FROM person ORDER BY id;
-EOF
-
-psql \
-  -U "app" \
-  -h localhost \
-  -d "app" \
-  -p 5434 <<EOF
   SELECT * FROM people ORDER BY id;
+  SELECT * FROM person ORDER BY id;
 EOF

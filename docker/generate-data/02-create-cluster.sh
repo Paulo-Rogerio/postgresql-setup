@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+cd $(dirname $0)
+
 source create-cluster/07-publisher.sh
 source create-cluster/08-list-publication.sh
 source create-cluster/10-subscriber.sh
