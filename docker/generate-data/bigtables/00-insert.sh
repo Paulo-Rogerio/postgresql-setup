@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+bash ../01-create-infra.sh
+
+sleep 5
+
 export PGPASSWORD="postgres"
 
 psql -U "app" -h localhost -d "app" -p 5433 -c "select count(*) from sistemas.people;"

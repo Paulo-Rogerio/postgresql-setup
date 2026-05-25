@@ -31,21 +31,21 @@ psql -h localhost -U app -d app -p 5433 <<EOF
 SET search_path='sistemas';
 
 CREATE TABLE person (
-    id SERIAL PRIMARY KEY,
+    id bigserial PRIMARY KEY,
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
     nationality TEXT,
     birthday DATE,
-    photo_id INTEGER UNIQUE
+    photo_id bigserial
 );
 
 CREATE TABLE people (
-    id SERIAL PRIMARY KEY,
+    id bigserial PRIMARY KEY,
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
     nationality TEXT,
     birthday DATE,
-    photo_id INTEGER UNIQUE
+    photo_id bigserial
 );
 
 CREATE OR REPLACE FUNCTION base26_encode(IN digits bigint, IN min_width int = 0)
@@ -75,4 +75,5 @@ CREATE OR REPLACE FUNCTION base26_encode(IN digits bigint, IN min_width int = 0)
 
 END;
 \$\$ LANGUAGE 'plpgsql' IMMUTABLE;
+
 EOF
